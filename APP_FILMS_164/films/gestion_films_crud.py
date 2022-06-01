@@ -37,10 +37,10 @@ def film_add_wtf():
             if form_add_film.validate_on_submit():
                 nom_film_add = form_add_film.nom_film_add_wtf.data
 
-                valeurs_insertion_dictionnaire = {"value_nom_film": nom_film_add}
+                valeurs_insertion_dictionnaire = {"value_nom_bouteille": nom_film_add}
                 print("valeurs_insertion_dictionnaire ", valeurs_insertion_dictionnaire)
 
-                strsql_insert_film = """INSERT INTO t_film (id_film,nom_film) VALUES (NULL,%(value_nom_film)s) """
+                strsql_insert_film = """INSERT INTO t_bouteille (id_bouteille,nom_bouteille) VALUES (NULL,%(value_nom_bouteille)s) """
                 with DBconnection() as mconn_bd:
                     mconn_bd.execute(strsql_insert_film, valeurs_insertion_dictionnaire)
 
@@ -87,25 +87,17 @@ def film_update_wtf():
             # Récupèrer la valeur du champ depuis "genre_update_wtf.html" après avoir cliqué sur "SUBMIT".
             nom_film_update = form_update_film.nom_film_update_wtf.data
             duree_film_update = form_update_film.duree_film_update_wtf.data
-            description_film_update = form_update_film.description_film_update_wtf.data
-            cover_link_film_update = form_update_film.cover_link_film_update_wtf.data
-            datesortie_film_update = form_update_film.datesortie_film_update_wtf.data
+            
 
             valeur_update_dictionnaire = {"value_id_film": id_film_update,
-                                          "value_nom_film": nom_film_update,
+                                          "value_nom_bouteille": nom_film_update,
                                           "value_duree_film": duree_film_update,
-                                          "value_description_film": description_film_update,
-                                          "value_cover_link_film": cover_link_film_update,
-                                          "value_datesortie_film": datesortie_film_update
                                           }
             print("valeur_update_dictionnaire ", valeur_update_dictionnaire)
 
-            str_sql_update_nom_film = """UPDATE t_film SET nom_film = %(value_nom_film)s,
-                                                            duree_film = %(value_duree_film)s,
-                                                            description_film = %(value_description_film)s,
-                                                            cover_link_film = %(value_cover_link_film)s,
-                                                            date_sortie_film = %(value_datesortie_film)s
-                                                            WHERE id_film = %(value_id_film)s"""
+            str_sql_update_nom_film = """UPDATE t_bouteille SET nom_bouteille = %(value_nom_bouteille)s,
+                                                            prix_bouteille = %(value_prix_bouteille)s,
+                                                            WHERE id_bouteille = %(value_id_bouteille)s"""
             with DBconnection() as mconn_bd:
                 mconn_bd.execute(str_sql_update_nom_film, valeur_update_dictionnaire)
 
@@ -117,7 +109,7 @@ def film_update_wtf():
             return redirect(url_for('films_genres_afficher', id_film_sel=id_film_update))
         elif request.method == "GET":
             # Opération sur la BD pour récupérer "id_film" et "intitule_genre" de la "t_genre"
-            str_sql_id_film = "SELECT * FROM t_film WHERE id_film = %(value_id_film)s"
+            str_sql_id_film = "SELECT * FROM t_bouteille WHERE id_bouteille = %(value_id_bouteille)s"
             valeur_select_dictionnaire = {"value_id_film": id_film_update}
             with DBconnection() as mybd_conn:
                 mybd_conn.execute(str_sql_id_film, valeur_select_dictionnaire)
@@ -127,13 +119,10 @@ def film_update_wtf():
                   data_film["nom_film"])
 
             # Afficher la valeur sélectionnée dans le champ du formulaire "film_update_wtf.html"
-            form_update_film.nom_film_update_wtf.data = data_film["nom_film"]
-            form_update_film.duree_film_update_wtf.data = data_film["duree_film"]
+            form_update_film.nom_film_update_wtf.data = data_film["nom_bouteille"]
+            form_update_film.duree_film_update_wtf.data = data_film["prix_bouteille"]
             # Debug simple pour contrôler la valeur dans la console "run" de PyCharm
-            print(f" duree film  ", data_film["duree_film"], "  type ", type(data_film["duree_film"]))
-            form_update_film.description_film_update_wtf.data = data_film["description_film"]
-            form_update_film.cover_link_film_update_wtf.data = data_film["cover_link_film"]
-            form_update_film.datesortie_film_update_wtf.data = data_film["date_sortie_film"]
+            print(f" prix bouteille  ", data_film["prix_bouteille"], "  type ", type(data_film["prix_bouteille"]))
 
     except Exception as Exception_film_update_wtf:
         raise ExceptionFilmUpdateWtf(f"fichier : {Path(__file__).name}  ;  "
@@ -177,7 +166,7 @@ def film_delete_wtf():
             data_film_delete = session['data_film_delete']
             print("data_film_delete ", data_film_delete)
 
-            flash(f"Effacer le film de façon définitive de la BD !!!", "danger")
+            flash(f"Effacer la bouteille de façon définitive de la BD !!!", "danger")
             # L'utilisateur vient de cliquer sur le bouton de confirmation pour effacer...
             # On affiche le bouton "Effacer genre" qui va irrémédiablement EFFACER le genre
             btn_submit_del = True
@@ -187,16 +176,16 @@ def film_delete_wtf():
             valeur_delete_dictionnaire = {"value_id_film": id_film_delete}
             print("valeur_delete_dictionnaire ", valeur_delete_dictionnaire)
 
-            str_sql_delete_fk_film_genre = """DELETE FROM t_genre_film WHERE fk_film = %(value_id_film)s"""
-            str_sql_delete_film = """DELETE FROM t_film WHERE id_film = %(value_id_film)s"""
+            str_sql_delete_fk_film_genre = """DELETE FROM t_avoir_cepage WHERE fk_bouteille = %(value_id_bouteille)s"""
+            str_sql_delete_film = """DELETE FROM t_bouteille WHERE id_bouteille = %(value_id_bouteille)s"""
             # Manière brutale d'effacer d'abord la "fk_film", même si elle n'existe pas dans la "t_genre_film"
             # Ensuite on peut effacer le film vu qu'il n'est plus "lié" (INNODB) dans la "t_genre_film"
             with DBconnection() as mconn_bd:
                 mconn_bd.execute(str_sql_delete_fk_film_genre, valeur_delete_dictionnaire)
                 mconn_bd.execute(str_sql_delete_film, valeur_delete_dictionnaire)
 
-            flash(f"Film définitivement effacé !!", "success")
-            print(f"Film définitivement effacé !!")
+            flash(f"Bouteille définitivement effacé !!", "success")
+            print(f"Bouteille définitivement effacé !!")
 
             # afficher les données
             return redirect(url_for('films_genres_afficher', id_film_sel=0))
@@ -205,7 +194,7 @@ def film_delete_wtf():
             print(id_film_delete, type(id_film_delete))
 
             # Requête qui affiche le film qui doit être efffacé.
-            str_sql_genres_films_delete = """SELECT * FROM t_film WHERE id_film = %(value_id_film)s"""
+            str_sql_genres_films_delete = """SELECT * FROM t_bouteille WHERE id_bouteille = %(value_id_bouteille)s"""
 
             with DBconnection() as mydb_conn:
                 mydb_conn.execute(str_sql_genres_films_delete, valeur_select_dictionnaire)

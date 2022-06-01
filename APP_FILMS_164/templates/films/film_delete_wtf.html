@@ -42,7 +42,7 @@
 						{{ row.nom_film }}
 					</th>
 					<th class="align-middle">
-						{{ row.duree_film|default("", True) }}
+						{{ row.prix_bouteille|default("", True) }}
 					</th>
 					<th class="align-middle">
 						{{ row.date_sortie_film|default("", True) }}
@@ -73,14 +73,14 @@
 
 			<form action="" method="POST" novalidate>
 				<!-- Protection contre les attaques Cross-Site Request Forgery (CSRF) -->
-				{{ form_delete_film.hidden_tag() }}
-				{{ form_delete_film.submit_btn_conf_del_film(class="btn btn-info") }}
+				{{ form_delete_bouteille.hidden_tag() }}
+				{{ form_delete_bouteille.submit_btn_conf_del_film(class="btn btn-info") }}
 
 				{% if btn_submit_del %}
-					{{ form_delete_film.submit_btn_del_film(class="btn btn-danger") }}
+					{{ form_delete_bouteille.submit_btn_del_film(class="btn btn-danger") }}
 				{% endif %}
 
-				{{ form_delete_film.submit_btn_annuler(class="btn btn-primary") }}
+				{{ form_delete_bouteille.submit_btn_annuler(class="btn btn-primary") }}
 			</form>
 		</div>
 	</div>

@@ -32,11 +32,13 @@ def films_genres_afficher(id_film_sel):
     if request.method == "GET":
         try:
             with DBconnection() as mc_afficher:
-                strsql_genres_films_afficher_data = """SELECT id_film, nom_film, duree_film, description_film, cover_link_film, date_sortie_film,
-                                                            GROUP_CONCAT(intitule_genre) as GenresFilms FROM t_genre_film
-                                                            RIGHT JOIN t_film ON t_film.id_film = t_genre_film.fk_film
-                                                            LEFT JOIN t_genre ON t_genre.id_genre = t_genre_film.fk_genre
-                                                            GROUP BY id_film"""
+                strsql_genres_films_afficher_data = """SELECT id_bouteille, nom_bouteille, prix_bouteille,
+                                                       GROUP_CONCAT(cepage_bouteille) as CepagesBouteilles FROM t_avoir_cepage
+                                                       INNER JOIN t_bouteille ON t_bouteille.id_bouteille = t_avoir_cepage.fk_bouteille
+                                                       INNER JOIN t_cepage_bouteille ON t_cepage_bouteille.id_cepage_bouteille = t_avoir_cepage.fk_cepage
+                                                       GROUP BY id_bouteille"""
+
+
                 if id_film_sel == 0:
                     # le paramètre 0 permet d'afficher tous les films
                     # Sinon le paramètre représente la valeur de l'id du film
@@ -46,7 +48,7 @@ def films_genres_afficher(id_film_sel):
                     valeur_id_film_selected_dictionnaire = {"value_id_film_selected": id_film_sel}
                     # En MySql l'instruction HAVING fonctionne comme un WHERE... mais doit être associée à un GROUP BY
                     # L'opérateur += permet de concaténer une nouvelle valeur à la valeur de gauche préalablement définie.
-                    strsql_genres_films_afficher_data += """ HAVING id_film= %(value_id_film_selected)s"""
+                    strsql_genres_films_afficher_data += """ HAVING id_bouteille= %(value_id_bouteille_selected)s"""
 
                     mc_afficher.execute(strsql_genres_films_afficher_data, valeur_id_film_selected_dictionnaire)
 
@@ -59,9 +61,9 @@ def films_genres_afficher(id_film_sel):
                     flash("""La table "t_film" est vide. !""", "warning")
                 elif not data_genres_films_afficher and id_film_sel > 0:
                     # Si l'utilisateur change l'id_film dans l'URL et qu'il ne correspond à aucun film
-                    flash(f"Le film {id_film_sel} demandé n'existe pas !!", "warning")
+                    flash(f"La bouteille {id_film_sel} demandé n'existe pas !!", "warning")
                 else:
-                    flash(f"Données films et genres affichés !!", "success")
+                    flash(f"Données Bouteille affichés !!", "success")
 
         except Exception as Exception_films_genres_afficher:
             raise ExceptionFilmsGenresAfficher(f"fichier : {Path(__file__).name}  ;  {films_genres_afficher.__name__} ;"
@@ -93,7 +95,7 @@ def edit_genre_film_selected():
     if request.method == "GET":
         try:
             with DBconnection() as mc_afficher:
-                strsql_genres_afficher = """SELECT id_genre, intitule_genre FROM t_genre ORDER BY id_genre ASC"""
+                strsql_genres_afficher = """SELECT id_cepage_bouteille, t_cepage_bouteille FROM  ORDER BY id_cepage_bouteille ASC"""
                 mc_afficher.execute(strsql_genres_afficher)
             data_genres_all = mc_afficher.fetchall()
             print("dans edit_genre_film_selected ---> data_genres_all", data_genres_all)
@@ -127,14 +129,14 @@ def edit_genre_film_selected():
 
             # Dans le composant "tags-selector-tagselect" on doit connaître
             # les genres qui ne sont pas encore sélectionnés.
-            lst_data_genres_films_non_attribues = [item['id_genre'] for item in data_genres_films_non_attribues]
+            lst_data_genres_films_non_attribues = [item['id_cepage_bouteille'] for item in data_genres_films_non_attribues]
             session['session_lst_data_genres_films_non_attribues'] = lst_data_genres_films_non_attribues
             print("lst_data_genres_films_non_attribues  ", lst_data_genres_films_non_attribues,
                   type(lst_data_genres_films_non_attribues))
 
             # Dans le composant "tags-selector-tagselect" on doit connaître
             # les genres qui sont déjà sélectionnés.
-            lst_data_genres_films_old_attribues = [item['id_genre'] for item in data_genres_films_attribues]
+            lst_data_genres_films_old_attribues = [item['id_cepage_bouteille'] for item in data_genres_films_attribues]
             session['session_lst_data_genres_films_old_attribues'] = lst_data_genres_films_old_attribues
             print("lst_data_genres_films_old_attribues  ", lst_data_genres_films_old_attribues,
                   type(lst_data_genres_films_old_attribues))
@@ -221,11 +223,11 @@ def update_genre_film_selected():
 
             # SQL pour insérer une nouvelle association entre
             # "fk_film"/"id_film" et "fk_genre"/"id_genre" dans la "t_genre_film"
-            strsql_insert_genre_film = """INSERT INTO t_genre_film (id_genre_film, fk_genre, fk_film)
-                                                    VALUES (NULL, %(value_fk_genre)s, %(value_fk_film)s)"""
+            strsql_insert_genre_film = """INSERT INTO t_avoir_cepage (id_avoir_cepage, fk_cepage, fk_bouteille)
+                                                    VALUES (NULL, %(value_fk_cepage)s, %(value_fk_bouteille)s)"""
 
             # SQL pour effacer une (des) association(s) existantes entre "id_film" et "id_genre" dans la "t_genre_film"
-            strsql_delete_genre_film = """DELETE FROM t_genre_film WHERE fk_genre = %(value_fk_genre)s AND fk_film = %(value_fk_film)s"""
+            strsql_delete_genre_film = """DELETE FROM t_avoir_cepage WHERE fk_cepage = %(value_fk_cepage)s AND fk_bouteille = %(value_fk_bouteille)s"""
 
             with DBconnection() as mconn_bd:
                 # Pour le film sélectionné, parcourir la liste des genres à INSÉRER dans la "t_genre_film".
@@ -233,8 +235,8 @@ def update_genre_film_selected():
                 for id_genre_ins in lst_diff_genres_insert_a:
                     # Constitution d'un dictionnaire pour associer l'id du film sélectionné avec un nom de variable
                     # et "id_genre_ins" (l'id du genre dans la liste) associé à une variable.
-                    valeurs_film_sel_genre_sel_dictionnaire = {"value_fk_film": id_film_selected,
-                                                               "value_fk_genre": id_genre_ins}
+                    valeurs_film_sel_genre_sel_dictionnaire = {"value_fk_bouteille": id_film_selected,
+                                                               "value_fk_cepage": id_genre_ins}
 
                     mconn_bd.execute(strsql_insert_genre_film, valeurs_film_sel_genre_sel_dictionnaire)
 
@@ -243,8 +245,8 @@ def update_genre_film_selected():
                 for id_genre_del in lst_diff_genres_delete_b:
                     # Constitution d'un dictionnaire pour associer l'id du film sélectionné avec un nom de variable
                     # et "id_genre_del" (l'id du genre dans la liste) associé à une variable.
-                    valeurs_film_sel_genre_sel_dictionnaire = {"value_fk_film": id_film_selected,
-                                                               "value_fk_genre": id_genre_del}
+                    valeurs_film_sel_genre_sel_dictionnaire = {"value_fk_bouteille": id_film_selected,
+                                                               "value_fk_cepage": id_genre_del}
 
                     # Du fait de l'utilisation des "context managers" on accède au curseur grâce au "with".
                     # la subtilité consiste à avoir une méthode "execute" dans la classe "DBconnection"
@@ -276,20 +278,20 @@ def genres_films_afficher_data(valeur_id_film_selected_dict):
     print("valeur_id_film_selected_dict...", valeur_id_film_selected_dict)
     try:
 
-        strsql_film_selected = """SELECT id_film, nom_film, duree_film, description_film, cover_link_film, date_sortie_film, GROUP_CONCAT(id_genre) as GenresFilms FROM t_genre_film
-                                        INNER JOIN t_film ON t_film.id_film = t_genre_film.fk_film
-                                        INNER JOIN t_genre ON t_genre.id_genre = t_genre_film.fk_genre
-                                        WHERE id_film = %(value_id_film_selected)s"""
+        strsql_film_selected = """SELECT id_bouteille, nom_bouteille,prix_bouteille, GROUP_CONCAT(id_cepage_bouteille) as CepagesBouteilles FROM t_avoir_cepage
+                                        INNER JOIN t_bouteille ON t_bouteille.id_bouteille = t_avoir_cepage.fk_bouteille
+                                        INNER JOIN t_cepage_bouteille ON t_cepage_bouteille.id_cepage_bouteille = t_avoir_cepage.fk_cepage
+                                        WHERE id_bouteille = %(value_id_film_selected)s"""
 
-        strsql_genres_films_non_attribues = """SELECT id_genre, intitule_genre FROM t_genre WHERE id_genre not in(SELECT id_genre as idGenresFilms FROM t_genre_film
-                                                    INNER JOIN t_film ON t_film.id_film = t_genre_film.fk_film
-                                                    INNER JOIN t_genre ON t_genre.id_genre = t_genre_film.fk_genre
-                                                    WHERE id_film = %(value_id_film_selected)s)"""
+        strsql_genres_films_non_attribues = """SELECT id_cepage_bouteille, cepage_bouteille FROM t_cepage_bouteille WHERE id_cepage_bouteille not in(SELECT id_cepage_bouteille as idGenresFilms FROM t_avoir_cepage
+                                                    INNER JOIN t_bouteille ON t_bouteille.id_bouteille = t_avoir_cepage.fk_bouteille
+                                                    INNER JOIN t_cepage_bouteille ON t_cepage_bouteille.id_cepage_bouteille = t_avoir_cepage.fk_cepage
+                                                    WHERE id_bouteille = %(value_id_film_selected)s)"""
 
-        strsql_genres_films_attribues = """SELECT id_film, id_genre, intitule_genre FROM t_genre_film
-                                            INNER JOIN t_film ON t_film.id_film = t_genre_film.fk_film
-                                            INNER JOIN t_genre ON t_genre.id_genre = t_genre_film.fk_genre
-                                            WHERE id_film = %(value_id_film_selected)s"""
+        strsql_genres_films_attribues = """SELECT id_bouteille, id_cepage_bouteille, cepage_bouteille FROM t_avoir_cepage
+                                            INNER JOIN t_bouteille ON t_bouteille.id_bouteille = t_avoir_cepage.fk_bouteille
+                                            INNER JOIN t_cepage_bouteille ON t_cepage_bouteille.id_cepage_bouteille = t_avoir_cepage.fk_cepage
+                                            WHERE id_bouteille = %(value_id_film_selected)s"""
 
         # Du fait de l'utilisation des "context managers" on accède au curseur grâce au "with".
         with DBconnection() as mc_afficher:

@@ -41,8 +41,8 @@ class FormWTFUpdateGenre(FlaskForm):
                                                                                          "apostrophe, de double trait "
                                                                                          "union")
                                                                           ])
-    date_genre_wtf_essai = DateField("Essai date", validators=[InputRequired("Date obligatoire"),
-                                                               DataRequired("Date non valide")])
+    # date_genre_wtf_essai = DateField("Essai date", validators=[InputRequired("Date obligatoire"),
+    #                                                            DataRequired("Date non valide")])
     submit = SubmitField("Update genre")
 
 
@@ -53,7 +53,7 @@ class FormWTFDeleteGenre(FlaskForm):
         nom_genre_delete_wtf : Champ qui reçoit la valeur du genre, lecture seule. (readonly=true)
         submit_btn_del : Bouton d'effacement "DEFINITIF".
         submit_btn_conf_del : Bouton de confirmation pour effacer un "genre".
-        submit_btn_annuler : Bouton qui permet d'afficher la table "t_genre".
+        submit_btn_annuler : Bouton qui permet d'afficher la table "t_cepage_bouteille".
     """
     nom_genre_delete_wtf = StringField("Effacer ce genre")
     submit_btn_del = SubmitField("Effacer genre")
