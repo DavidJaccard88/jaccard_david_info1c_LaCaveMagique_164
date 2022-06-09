@@ -10,3 +10,4 @@ Par la suite rajouter les tables manquante en respectant le temps imparti.
 Le code mélange htlm, css, python et un peu de java script yo.
 
 Je commenterai dans ce readme l'avancé du projet.
+big cadcacaccac
